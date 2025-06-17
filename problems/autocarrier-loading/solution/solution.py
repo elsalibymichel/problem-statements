@@ -10,7 +10,7 @@ class ACLSolution():
         for assignment in data:
             vehicle_id = assignment['vehicle']
             deck_id = assignment['deck']
-            self.deck_assignment[vehicle] = deck
+            self.deck_assignment[vehicle_id] = deck_id
 
     def __repr__(self):
         """Return a string representation of the solution."""
