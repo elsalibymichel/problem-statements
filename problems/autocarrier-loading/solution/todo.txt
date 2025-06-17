@@ -1,0 +1,13 @@
+1. Define class with representation:
+    - Vector with one element for each stop, each stop is associated to 2 vectors:
+        - one represents the unloading order of the vehicles
+        - the other represents the loading order of the vehicles
+    - One cumulative dictionary that translate vehicles to deck:
+        - this dictionary is basically the solution
+        - we are not including the order as we assume that the operators will take the best decisions autonomously
+    - Redundant data:
+        -Vector with one element for each couple of adjacent stops, each containing two elements:
+            - (capacity) a vector with one element of each deck, which represents the used capacity of each deck
+            - (occupation) a vector of vectors, each representing the order of the cars "currently" loaded on a deck
+2. Constraints:
+    -
