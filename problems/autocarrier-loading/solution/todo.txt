@@ -6,8 +6,24 @@
         - this dictionary is basically the solution
         - we are not including the order as we assume that the operators will take the best decisions autonomously
     - Redundant data:
-        -Vector with one element for each couple of adjacent stops, each containing two elements:
+        - Vector with one element for each couple of adjacent stops, each containing two elements:
             - (capacity) a vector with one element of each deck, which represents the used capacity of each deck
             - (occupation) a vector of vectors, each representing the order of the cars "currently" loaded on a deck
-2. Constraints:
-    -
+2. solution.py
+    - Add two vectors for each stop the order of loading and unloading
+        - Firstly assume that the loading order is the based on lexicographic order of the vehicles
+3. Computation of the number of moves for a unloading cars at a stop
+    - Pseudocode:
+        for car in unloading_cars:
+            deck = get_deck[car]
+            paths = get_paths[deck]
+            same_deck_cars <- list of cars on the same deck that have to be moved to unload the current one
+            for path in paths: #assuming that the current deck is not contained in the paths
+                blocking_cars.add_if_not_present(same_deck_cars)
+                for deck in path:
+                    cars = get_cars[deck]
+                    cars.remove[unloading_cars]
+                    blocking_cars.add_if_not_present(cars)
+                number_of_operations = blocking_cars.size()
+                # store (path, number of operations)
+
