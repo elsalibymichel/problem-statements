@@ -14,16 +14,7 @@
         - Firstly assume that the loading order is the based on lexicographic order of the vehicles
 3. Computation of the number of moves for a unloading cars at a stop
     - Pseudocode:
-        for car in unloading_cars:
-            deck = get_deck[car]
-            paths = get_paths[deck]
-            same_deck_cars <- list of cars on the same deck that have to be moved to unload the current one
-            for path in paths: #assuming that the current deck is not contained in the paths
-                blocking_cars.add_if_not_present(same_deck_cars)
-                for deck in path:
-                    cars = get_cars[deck]
-                    cars.remove[unloading_cars]
-                    blocking_cars.add_if_not_present(cars)
-                number_of_operations = blocking_cars.size()
-                # store (path, number of operations)
+        For each stop, given unloading_cars, current_track_load
+
+
 
