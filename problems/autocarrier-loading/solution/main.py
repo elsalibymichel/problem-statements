@@ -25,10 +25,6 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     output_file = sys.argv[2]
     
-    try:
-        main(input_file, output_file)
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    main(input_file, output_file)
     
     print("Problem and solution loaded successfully.")
