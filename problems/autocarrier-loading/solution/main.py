@@ -26,5 +26,4 @@ if __name__ == "__main__":
     output_file = sys.argv[2]
     
     main(input_file, output_file)
-    
     print("Problem and solution loaded successfully.")
