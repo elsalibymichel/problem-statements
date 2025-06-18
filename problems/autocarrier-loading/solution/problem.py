@@ -4,6 +4,10 @@ from pydantic import BaseModel, model_validator
 from typing import Dict, List, Optional, Self
 import sys
 import json
+from local_search import ChangeDeckNeighbourhood
+
+from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbourhood
+
 from solution import ACLSolution
 
 class Operation(BaseModel):
@@ -30,7 +34,11 @@ class Transporter(BaseModel):
     decks: Dict[str, Deck]
 
 
-class ACLProblem(BaseModel):
+class ACLProblem(
+    BaseModel,
+    SupportsLocalNeighbourhood[ChangeDeckNeighbourhood],
+    SupportsRandomSolution[ACLSolution],
+):
     route: List[Operation]
     vehicles: Dict[str, Vehicle]
     transporter: Transporter
