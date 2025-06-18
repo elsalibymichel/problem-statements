@@ -1,6 +1,6 @@
 import itertools
 from copy import deepcopy
-from problem import Vehicle
+from data_helper_class import Operation,Vehicle,Deck,Transporter
 from dataclasses import dataclass
 
 @dataclass
