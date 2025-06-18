@@ -1,7 +1,10 @@
+import random
+
 from pydantic import BaseModel, model_validator
 from typing import Dict, List, Optional, Self
 import sys
 import json
+from solution import ACLSolution
 
 class Operation(BaseModel):
     load: Optional[List[str]] = []
@@ -62,7 +65,15 @@ class ACLProblem(BaseModel):
         if self.route[-1].load:
             raise ValueError("The last operation in the route must not have a 'load' defined.")
         return self
-        
+
+    def random_solution(self) -> ACLSolution:
+        vehicles = self.vehicles.keys()
+        decks = list(self.transporter.decks.keys())
+        solution = ACLSolution(self)
+        for vehicle_id in vehicles:
+            solution.deck_assignment[vehicle_id] = random.choice(decks)
+        solution.update_truck_load()
+        return solution
     
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -73,7 +84,8 @@ if __name__ == "__main__":
         with open(input_file, 'r') as file:
             data = json.load(file)
         problem = ACLProblem(**data)
-        print(problem)
+        print(f"Problem: {problem}")
+        print(f"Random solution: {problem.random_solution()}")
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
