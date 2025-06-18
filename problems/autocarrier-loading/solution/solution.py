@@ -11,10 +11,9 @@ class DeckState():
 
 class ACLSolution():
     def __init__(self, problem):
-        self.instance = problem
+        self.problem = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
-
-        self.current_truck_load = [{ deck_id: DeckState(load=[], capacity_remaining=self.instance.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.instance.transporter.decks.keys()} for _ in range(len(self.instance.route))]
+        self.current_truck_load = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
 
     def from_json(self, json_data):
         """Load the solution from a JSON string."""
@@ -26,8 +25,8 @@ class ACLSolution():
 
     def update_truck_load(self):
         """Update the current truck load based on the deck assignments."""
-        current_load = {deck_id: DeckState(load=[], capacity_remaining=self.instance.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.instance.transporter.decks.keys()}
-        for stop, operation in enumerate(self.instance.route):
+        current_load = {deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()}
+        for stop, operation in enumerate(self.problem.route):
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
                 # CHANGE HERE: Remove the vehicle from the current load
@@ -48,9 +47,9 @@ class ACLSolution():
         min_moves_per_stop = []
 
         for stop_index, stop_truck_load in enumerate(self.current_truck_load):
-            if stop_index == len(self.instance.route)-1:
+            if stop_index == len(self.problem.route)-1:
                 continue
-            operation = self.instance.route[stop_index+1]
+            operation = self.problem.route[stop_index + 1]
             cars_to_unload = operation.unload
             if not cars_to_unload:
                 min_moves_per_stop.append(0)
@@ -67,7 +66,7 @@ class ACLSolution():
             # Build blocking vehicle sets per deck
             path_combinations = {}
             for deck_id in decks_with_car_to_unload:
-                deck = self.instance.transporter.decks[deck_id]
+                deck = self.problem.transporter.decks[deck_id]
                 blocking_sets = []
 
                 if deck.access_via:
@@ -105,9 +104,9 @@ class ACLSolution():
         min_moves_per_stop = []
 
         for stop_index, stop_truck_load in enumerate(self.current_truck_load):
-            if stop_index == len(self.instance.route)-1:
+            if stop_index == len(self.problem.route)-1:
                 continue
-            operation = self.instance.route[stop_index+1]
+            operation = self.problem.route[stop_index + 1]
             cars_to_unload = operation.unload
             cars_to_load = operation.load
 
@@ -126,7 +125,7 @@ class ACLSolution():
                         continue
             # Unloading: build blocking vehicle sets per deck
             for deck_id in decks_with_car_to_unload:
-                deck = self.instance.transporter.decks[deck_id]
+                deck = self.problem.transporter.decks[deck_id]
                 blocking_sets = []
                 if deck.access_via:
                     # Add blocking vehicles from access paths
@@ -150,7 +149,7 @@ class ACLSolution():
                         continue
             # Loading: build blocking vehicle sets per deck
             for deck_id in decks_with_car_to_load:
-                deck = self.instance.transporter.decks[deck_id]
+                deck = self.problem.transporter.decks[deck_id]
                 blocking_sets = []
                 if deck.access_via:
                     # Add blocking vehicles from access paths
