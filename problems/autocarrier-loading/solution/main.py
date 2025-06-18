@@ -15,7 +15,8 @@ def main(input_file: str, output_file: str):
     # Print the problem and solution for debugging
     print("Problem:", problem)
     print("Solution:", solution)
-    print("Sum of moves to unload:", solution.sum_moves_to_unload())
+    print("Sum of moves to unload and load:", solution.sum_moves_to_unload_and_load())
+    print("Sum of moves to unload only:", solution.sum_moves_to_unload())
 
 
 if __name__ == "__main__":
