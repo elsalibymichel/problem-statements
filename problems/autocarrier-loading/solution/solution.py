@@ -1,11 +1,20 @@
 import itertools
 from copy import deepcopy
+from problem import Vehicle
+from dataclasses import dataclass
+
+@dataclass
+class DeckState():
+    load: list[Vehicle]
+    capacity_remaining: int
+    capacity_used: int
 
 class ACLSolution():
     def __init__(self, problem):
         self.instance = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
-        self.current_truck_load = [{ deck_id: [] for deck_id in self.instance.transporter.decks.keys()} for _ in range(len(self.instance.route))]
+
+        self.current_truck_load = [{ deck_id: DeckState(load=[], capacity_remaining=self.instance.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.instance.transporter.decks.keys()} for _ in range(len(self.instance.route))]
 
     def from_json(self, json_data):
         """Load the solution from a JSON string."""
@@ -17,13 +26,15 @@ class ACLSolution():
 
     def update_truck_load(self):
         """Update the current truck load based on the deck assignments."""
-        current_load = {deck_id: [] for deck_id in self.instance.transporter.decks.keys()}
+        current_load = {deck_id: DeckState(load=[], capacity_remaining=self.instance.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.instance.transporter.decks.keys()}
         for stop, operation in enumerate(self.instance.route):
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
+                # CHANGE HERE: Remove the vehicle from the current load
                 current_load[assigned_deck].remove(vehicle_id)
             for vehicle_id in operation.load or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
+                # CHANGE HERE: Remove the vehicle from the current load
                 current_load[assigned_deck].append(vehicle_id)
             self.current_truck_load[stop] = deepcopy(current_load)        
 
@@ -86,3 +97,8 @@ class ACLSolution():
                 min_moves_per_stop.append(0)
         # print(min_moves_per_stop)
         return sum(min_moves_per_stop)
+    
+    def objective_value(self) -> int:
+        """Return the objective value of the solution."""
+        # TODO: compute the amount of violation of constraints + Number of moves to unload
+        return self.sum_moves_to_unload()
