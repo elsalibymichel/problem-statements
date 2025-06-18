@@ -1,3 +1,4 @@
+import itertools
 from copy import deepcopy
 
 class ACLSolution():
@@ -29,3 +30,59 @@ class ACLSolution():
     def __repr__(self):
         """Return a string representation of the solution."""
         return f"ACLSolution(deck_assignment={self.deck_assignment}, current_truck_load={self.current_truck_load})"
+
+    #TODO account also car moves for loading
+    def sum_moves_to_unload(self) -> int:
+        """Return the sum of the minimum unnecessary car moves needed at any stop to access vehicles to unload."""
+        min_moves_per_stop = []
+
+        for stop_index, stop_truck_load in enumerate(self.current_truck_load):
+            if stop_index == len(self.instance.route)-1:
+                continue
+            operation = self.instance.route[stop_index+1]
+            if not operation.unload:
+                min_moves_per_stop.append(0)
+                continue
+
+            # Identify decks from which we need to unload
+            decks_with_car_to_unload = set()
+            for car in operation.unload:
+                for deck_id, vehicles in stop_truck_load.items():
+                    if car in vehicles:
+                        decks_with_car_to_unload.add(deck_id)
+                        continue
+
+            # Build blocking vehicle sets per deck
+            path_combinations = {}
+            for deck_id in decks_with_car_to_unload:
+                deck = self.instance.transporter.decks[deck_id]
+                blocking_sets = []
+
+                if deck.access_via:
+                    # Add blocking vehicles from access paths
+                    for path in deck.access_via:
+                        blocking_vehicles = set()
+                        for via_deck_id in path:
+                            blocking_vehicles.update(stop_truck_load[via_deck_id])
+                        blocking_sets.append(blocking_vehicles - set(operation.unload))
+                else:
+                    # Freely accessible deck
+                    blocking_sets.append(set())
+
+                #TODO for now, we are assume the absence of blocking cars on the same deck, but it should be considered
+                path_combinations[deck_id] = blocking_sets
+
+            # Compute the minimal number of moves needed across all combinations of paths
+            moves_per_combination = []
+            for combination in itertools.product(*path_combinations.values()):
+                cars_to_move = set()
+                for car_set in combination:
+                    cars_to_move.update(car_set)
+                moves_per_combination.append(len(cars_to_move))
+
+            if moves_per_combination:
+                min_moves_per_stop.append(min(moves_per_combination))
+            else:
+                min_moves_per_stop.append(0)
+        # print(min_moves_per_stop)
+        return sum(min_moves_per_stop)

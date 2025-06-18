@@ -14,7 +14,8 @@
         - Firstly assume that the loading order is the based on lexicographic order of the vehicles
 3. Computation of the number of moves for a unloading cars at a stop
     - Pseudocode:
-        For each stop, given unloading_cars, current_track_load
+        For each stop, given unloading_cars, current_track_load:
+            For each
 
 
 
