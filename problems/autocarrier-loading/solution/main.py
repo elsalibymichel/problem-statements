@@ -2,6 +2,8 @@ from problem import ACLProblem
 from solution import ACLSolution
 import json
 from pathlib import Path
+import local_search
+import roar_net_api.algorithms as alg
 
 import sys
 
@@ -12,12 +14,15 @@ def main(input_file: str, output_file: str):
     # Create a solution instance
     solution = ACLSolution(problem)
     solution.from_json(json.load(open(output_file)))
+
+    new_solution = alg.rls(problem, problem.random_solution(), 10)
+    print(new_solution)
     
     # Print the problem and solution for debugging
-    print("Problem:", problem)
-    print("Solution:", solution)
-    print("Sum of moves to unload and load:", solution.sum_moves_to_unload_and_load())
-    print("Sum of moves to unload only:", solution.sum_moves_to_unload())
+    #print("Problem:", problem)
+    #print("Solution:", solution)
+    #print("Sum of moves to unload and load:", solution.sum_moves_to_unload_and_load())
+    #print("Sum of moves to unload only:", solution.sum_moves_to_unload())
 
 def backup():
     BASE_DIR = Path(__file__).resolve().parent

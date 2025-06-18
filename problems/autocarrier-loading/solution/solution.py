@@ -1,5 +1,8 @@
 import itertools
 from copy import deepcopy
+
+from roar_net_api.operations import SupportsObjectiveValue
+
 from data_helper_class import Operation,Vehicle,Deck,Transporter
 from dataclasses import dataclass
 
@@ -9,7 +12,9 @@ class DeckState():
     capacity_remaining: int
     capacity_used: int
 
-class ACLSolution():
+class ACLSolution(
+    SupportsObjectiveValue
+):
     def __init__(self, problem):
         self.problem = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
@@ -30,11 +35,11 @@ class ACLSolution():
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
                 # CHANGE HERE: Remove the vehicle from the current load
-                current_load[assigned_deck].remove(vehicle_id)
+                current_load[assigned_deck].load.remove(vehicle_id)
             for vehicle_id in operation.load or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
                 # CHANGE HERE: Remove the vehicle from the current load
-                current_load[assigned_deck].append(vehicle_id)
+                current_load[assigned_deck].load.append(vehicle_id)
             self.current_truck_load[stop] = deepcopy(current_load)        
 
     def __repr__(self):
