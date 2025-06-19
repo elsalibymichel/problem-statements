@@ -16,10 +16,17 @@ def main(input_file: str, output_file: str = None):
         initial_solution = ACLSolution(problem, json.load(open(output_file)))
     else:
         initial_solution = problem.random_solution()
+    
+    print("Initial solution:", initial_solution.objective_value(), initial_solution)
 
-    print("Initial solution:", initial_solution, initial_solution.objective_value())
-    new_solution = alg.sa(problem, initial_solution, 30, 50.0)
-    print("Final solution:", new_solution, new_solution.objective_value())
+    # Run the local search algorithm
+    new_solution = alg.first_improvement(problem, initial_solution)
+
+    print("Final solution:", new_solution.objective_value(), new_solution)
+
+    # print("Initial solution:", initial_solution, initial_solution.objective_value())
+    # new_solution = alg.sa(problem, initial_solution, 30, 50.0)
+    # print("Final solution:", new_solution, new_solution.objective_value())
     
     # Print the problem and solution for debugging
     #print("Problem:", problem)
