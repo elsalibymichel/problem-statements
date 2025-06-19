@@ -1,6 +1,9 @@
 import itertools
 from copy import deepcopy
-from problem import Vehicle
+
+from roar_net_api.operations import SupportsObjectiveValue, SupportsCopySolution
+
+from data_helper_class import Operation, Vehicle, Deck, Transporter
 from dataclasses import dataclass
 
 @dataclass
@@ -9,12 +12,14 @@ class DeckState():
     capacity_remaining: int
     capacity_used: int
 
-class ACLSolution():
+class ACLSolution(
+    SupportsObjectiveValue,
+    SupportsCopySolution
+):
     def __init__(self, problem):
-        self.instance = problem
+        self.problem = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
-
-        self.current_truck_load = [{ deck_id: DeckState(load=[], capacity_remaining=self.instance.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.instance.transporter.decks.keys()} for _ in range(len(self.instance.route))]
+        self.current_truck_load = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
 
     def from_json(self, json_data):
         """Load the solution from a JSON string."""
@@ -24,20 +29,23 @@ class ACLSolution():
             self.deck_assignment[vehicle_id] = deck_id
         self.update_truck_load()
 
+    def copy(self):
+        """Create a deep copy of the solution."""
+        new_solution = ACLSolution(self.problem)
+        new_solution.deck_assignment = deepcopy(self.deck_assignment)
+        new_solution.current_truck_load = deepcopy(self.current_truck_load)
+        return new_solution
+
     def update_truck_load(self):
         """Update the current truck load based on the deck assignments."""
-        current_load = {deck_id: DeckState(load=[], capacity_remaining=self.instance.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.instance.transporter.decks.keys()}
-        for stop, operation in enumerate(self.instance.route):
+        current_load = {deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()}
+        for stop, operation in enumerate(self.problem.route):
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
-                # Remove the vehicle from the deck's load list
-                if assigned_deck is not None and vehicle_id in current_load[assigned_deck].load:
-                    current_load[assigned_deck].load.remove(vehicle_id)
+                current_load[assigned_deck].load.remove(vehicle_id)
             for vehicle_id in operation.load or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
-                # Add the vehicle to the deck's load list
-                if assigned_deck is not None:
-                    current_load[assigned_deck].load.append(vehicle_id)
+                current_load[assigned_deck].load.append(vehicle_id)
             self.current_truck_load[stop] = deepcopy(current_load)        
 
     def __repr__(self):
@@ -50,9 +58,9 @@ class ACLSolution():
         min_moves_per_stop = []
 
         for stop_index, stop_truck_load in enumerate(self.current_truck_load):
-            if stop_index == len(self.instance.route)-1:
+            if stop_index == len(self.problem.route)-1:
                 continue
-            operation = self.instance.route[stop_index+1]
+            operation = self.problem.route[stop_index + 1]
             cars_to_unload = operation.unload
             if not cars_to_unload:
                 min_moves_per_stop.append(0)
@@ -69,7 +77,7 @@ class ACLSolution():
             # Build blocking vehicle sets per deck
             path_combinations = {}
             for deck_id in decks_with_car_to_unload:
-                deck = self.instance.transporter.decks[deck_id]
+                deck = self.problem.transporter.decks[deck_id]
                 blocking_sets = []
 
                 if deck.access_via:
@@ -107,9 +115,9 @@ class ACLSolution():
         min_moves_per_stop = []
 
         for stop_index, stop_truck_load in enumerate(self.current_truck_load):
-            if stop_index == len(self.instance.route)-1:
+            if stop_index == len(self.problem.route)-1:
                 continue
-            operation = self.instance.route[stop_index+1]
+            operation = self.problem.route[stop_index + 1]
             cars_to_unload = operation.unload
             cars_to_load = operation.load
 
@@ -128,7 +136,7 @@ class ACLSolution():
                         continue
             # Unloading: build blocking vehicle sets per deck
             for deck_id in decks_with_car_to_unload:
-                deck = self.instance.transporter.decks[deck_id]
+                deck = self.problem.transporter.decks[deck_id]
                 blocking_sets = []
                 if deck.access_via:
                     # Add blocking vehicles from access paths
@@ -152,7 +160,7 @@ class ACLSolution():
                         continue
             # Loading: build blocking vehicle sets per deck
             for deck_id in decks_with_car_to_load:
-                deck = self.instance.transporter.decks[deck_id]
+                deck = self.problem.transporter.decks[deck_id]
                 blocking_sets = []
                 if deck.access_via:
                     # Add blocking vehicles from access paths
