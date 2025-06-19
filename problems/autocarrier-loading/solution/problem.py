@@ -57,6 +57,10 @@ class ACLProblem(
         self.vehicles = tmp.vehicles
         self.transporter = tmp.transporter
 
+    def empty_solution(self) -> ACLSolution:
+        """Create an empty solution for this problem."""
+        return ACLSolution(self)
+
     def random_solution(self) -> ACLSolution:
         vehicles = self.vehicles.keys()
         decks = list(self.transporter.decks.keys())

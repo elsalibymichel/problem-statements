@@ -1,2 +1,3 @@
 pydantic==2.11.7
 roar-net-api @ git+https://github.com/roar-net/roar-net-api-py@53e932ec1db0488da61135b33d6f0debcce2e6ec
+click==8.2.1

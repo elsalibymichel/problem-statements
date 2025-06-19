@@ -6,6 +6,7 @@ from roar_net_api.operations import SupportsObjectiveValue, SupportsCopySolution
 from data_helper_class import Vehicle
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
+from constraints import deck_capacity_constraint, total_capacity_constraint
 
 @dataclass
 class DeckState():
@@ -32,6 +33,16 @@ class ACLSolution(
             self.deck_assignment[vehicle_id] = deck_id
         self.update_truck_load()
 
+    def to_json(self) -> List[Dict[str, Any]]:
+        """Convert the solution to a JSON serializable format."""
+        json_data = []
+        for vehicle_id, deck_id in self.deck_assignment.items():
+            json_data.append({
+                'vehicle': vehicle_id,
+                'deck': deck_id
+            })
+        return json_data
+
     def copy_solution(self) -> 'ACLSolution':
         """Create a deep copy of the solution."""
         new_solution = ACLSolution(self.problem)
@@ -54,6 +65,7 @@ class ACLSolution(
             for deck_id, deck_state in stop_load.items():
                 if deck_state.capacity_remaining < 0:
                     total_violations += abs(deck_state.capacity_remaining)
+        assert deck_capacity_constraint(self.problem, self, distance_to_feasibility=True) == total_violations, "The total capacity violations do not match the deck capacity constraint."
         return total_violations
 
     def update_truck_load(self):

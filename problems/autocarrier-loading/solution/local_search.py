@@ -17,21 +17,13 @@ class ChangeDeckMove(
     def apply_move(self, solution: ACLSolution) -> ACLSolution:
         new_solution = solution.copy_solution()
         new_solution.deck_assignment[self.vehicle_id] = self.deck_id
-<<<<<<< HEAD
         # TODO: update only the stops that are affected by this move
         new_solution.update_truck_load()
-=======
-        new_solution.update_truck_load() #TODO: make it more efficient
->>>>>>> b9120b314adf5e3208c262b0c0d09f10b40a12e4
         return new_solution
     
     def objective_value_increment(self, solution: ACLSolution) -> Optional[int]:
         """Calculate the objective value increment for this move."""
-<<<<<<< HEAD
         # TODO: currently this just returns the difference in objective value, do it more efficiently by only updating the affected stops
-=======
-        # TODO: currently this just returns the difference in objective value
->>>>>>> b9120b314adf5e3208c262b0c0d09f10b40a12e4
         new_solution = self.apply_move(solution.copy_solution())
         return new_solution.objective_value() - solution.objective_value()
 

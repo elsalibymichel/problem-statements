@@ -3,55 +3,94 @@ from solution import ACLSolution
 import json
 from pathlib import Path
 import local_search
+import click
 import roar_net_api.algorithms as alg
 
 import sys
 
-def main(input_file: str, output_file: str = None):
-    """Main function to load the problem and create a solution."""
+@click.group()
+def cli():
+    """Command line interface for the ACL problem."""
+    pass
+
+@cli.command()
+@click.argument('algorithm', type=click.Choice(['first_improvement', 'best_improvement'], case_sensitive=False))
+@click.argument('input_file', type=click.Path(exists=True))
+@click.option('--initial_solution', type=click.Path(), default=None, help='Path to the output file for the initial solution.')
+@click.option('--output', type=click.Path(), default=None, help='Path to the output file for the final solution.')
+def local_search(algorithm: str, input_file: str, initial_solution: Path, output: Path):
+    """
+    Run local search algorithms on the ACL problem.
+    ALGORITHM: The local search algorithm to use (first_improvement or best_improvement).
+    INPUT_FILE: Path to the input JSON file containing the ACL problem data.
+    --initial_solution INITIAL_SOLUTION: Path to the initial solution JSON file (optional).
+    --output OUTPUT_FILE: Path to the output JSON file for the final solution (optional).
+    """
     problem = ACLProblem(**json.load(open(input_file)))
-    
-    # Create a solution instance out of the json file
-    if output_file is not None:
-        initial_solution = ACLSolution(problem, json.load(open(output_file)))
+
+    if initial_solution is not None:
+        # Create a solution instance out of the json file
+        initial_solution = ACLSolution(problem, json.load(open(initial_solution)))    
     else:
+        # Generate a random initial solution
         initial_solution = problem.random_solution()
     
-    print("Initial solution:", initial_solution.objective_value(), initial_solution)
+    click.secho(f"Initial solution: [{initial_solution.objective_value()}]\n{initial_solution}", fg='blue')
 
-    # Run the local search algorithm
-    new_solution = alg.first_improvement(problem, initial_solution)
+    # Run the local search algorithm selected
+    if algorithm == 'best_improvement':
+        new_solution = alg.best_improvement(problem, initial_solution)
+    elif algorithm == 'first_improvement':
+        new_solution = alg.first_improvement(problem, initial_solution)
 
-    print("Final solution:", new_solution.objective_value(), new_solution)
+    if output is not None:
+        # Save the final solution to the output file
+        with open(output, 'w') as f:
+            json.dump(new_solution.to_json(), f, indent=4)
+    else:
+        # Print the final solution to stdout
+        if new_solution.objective_value() < initial_solution.objective_value():
+            color = 'green'
+        else:
+            color = 'orange'
+        click.secho(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}", fg=color)
 
-    # print("Initial solution:", initial_solution, initial_solution.objective_value())
-    # new_solution = alg.sa(problem, initial_solution, 30, 50.0)
-    # print("Final solution:", new_solution, new_solution.objective_value())
+
+@cli.command()
+@click.argument('input_file', type=click.Path(exists=True))
+@click.option('--output', type=click.Path(), default=None, help='Path to the output file for the final solution.')
+def constructive_search(input_file: str, output: Path):
+    """
+    Run constructive search algorithms on the ACL problem.
+    INPUT_FILE: Path to the input JSON file containing the ACL problem data.
+    --output OUTPUT_FILE: Path to the output JSON file for the final solution (optional).
+    """
+    problem = ACLProblem(**json.load(open(input_file)))
+
+    new_solution = alg.greedy_construction(problem)
+
+    if output is not None:
+        # Save the final solution to the output file
+        with open(output, 'w') as f:
+            json.dump(new_solution.to_json(), f, indent=4)
+    else:
+        # Print the final solution to stdout
+        if new_solution.objective_value() < initial_solution.objective_value():
+            color = 'green'
+        else:
+            color = 'orange'
+        click.secho(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}", fg=color)
+
+# def backup():
+#     BASE_DIR = Path(__file__).resolve().parent
+#     input_DATA_PATH = BASE_DIR.parent /"data"/"11CT_401696_s5_v13.json"  
+#     output_DATA_PATH = BASE_DIR.parent /"solution"/"solution_example.json"  
+
+#     input_file = input_DATA_PATH
+#     output_file = output_DATA_PATH
     
-    # Print the problem and solution for debugging
-    #print("Problem:", problem)
-    #print("Solution:", solution)
-    #print("Sum of moves to unload and load:", solution.sum_moves_to_unload_and_load())
-    #print("Sum of moves to unload only:", solution.sum_moves_to_unload())
+#     main(input_file, output_file)
 
-def backup():
-    BASE_DIR = Path(__file__).resolve().parent
-    input_DATA_PATH = BASE_DIR.parent /"data"/"11CT_401696_s5_v13.json"  
-    output_DATA_PATH = BASE_DIR.parent /"solution"/"solution_example.json"  
-
-    input_file = input_DATA_PATH
-    output_file = output_DATA_PATH
-    
-    main(input_file, output_file)
-
-
+# For a command line interface, we use the click library to handle arguments and options.
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python main.py <input_file>")
-        print("Run default calling")
-#        backup()
-        sys.exit(1)
-    
-    input_file = sys.argv[1]
-    
-    main(input_file)
+    cli()
