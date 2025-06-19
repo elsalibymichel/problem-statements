@@ -5,6 +5,8 @@ from pathlib import Path
 import local_search
 import click
 import roar_net_api.algorithms as alg
+import logging
+logging.basicConfig(level=logging.INFO)
 
 import sys
 

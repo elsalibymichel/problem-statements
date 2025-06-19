@@ -14,11 +14,14 @@ class ChangeDeckMove(
         self.vehicle_id = vehicle_id
         self.deck_id = deck_id
 
+    def __repr__(self):
+        return f"ChangeDeckMove(vehicle_id={self.vehicle_id}, deck_id={self.deck_id})"
+
     def apply_move(self, solution: ACLSolution) -> ACLSolution:
         new_solution = solution.copy_solution()
         new_solution.deck_assignment[self.vehicle_id] = self.deck_id
         # TODO: update only the stops that are affected by this move
-        new_solution.update_truck_load()        
+        new_solution.update_truck_load(0, -1)        
         return new_solution
     
     def objective_value_increment(self, solution: ACLSolution) -> Optional[int]:
