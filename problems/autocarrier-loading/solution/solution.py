@@ -5,7 +5,7 @@ from roar_net_api.operations import SupportsObjectiveValue, SupportsCopySolution
 
 from data_helper_class import Vehicle
 from dataclasses import dataclass
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 @dataclass
 class DeckState():
@@ -17,10 +17,12 @@ class ACLSolution(
     SupportsObjectiveValue,
     SupportsCopySolution
 ):
-    def __init__(self, problem : 'ACLProblem'):
+    def __init__(self, problem : 'ACLProblem', json_data: Optional[List[Dict[str, Any]]] = None):
         self.problem = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
         self.current_truck_load = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
+        if json_data is not None:
+            self.from_json(json_data)
 
     def from_json(self, json_data :  List[Dict[str, Any]]) -> None:
         """Load the solution from a JSON string."""
@@ -30,7 +32,7 @@ class ACLSolution(
             self.deck_assignment[vehicle_id] = deck_id
         self.update_truck_load()
 
-    def copy_solution(self):
+    def copy_solution(self) -> 'ACLSolution':
         """Create a deep copy of the solution."""
         new_solution = ACLSolution(self.problem)
         new_solution.deck_assignment = deepcopy(self.deck_assignment)
@@ -40,7 +42,19 @@ class ACLSolution(
     def objective_value(self) -> int:
         """Calculate the objective value of the solution."""
         # The objective value is the sum of moves needed to unload vehicles at each stop
-        return self.sum_moves_to_unload()
+        # plus the violation of the deck capacity constraints.
+        moves_to_unload = self.sum_moves_to_unload() 
+        capacity_violations = self.sum_capacity_violations()
+        return moves_to_unload + capacity_violations
+    
+    def sum_capacity_violations(self) -> int:
+        """Return the sum of the capacity violations for all decks."""
+        total_violations = 0
+        for stop_load in self.current_truck_load:
+            for deck_id, deck_state in stop_load.items():
+                if deck_state.capacity_remaining < 0:
+                    total_violations += abs(deck_state.capacity_remaining)
+        return total_violations
 
     def update_truck_load(self):
         """Update the current truck load based on the deck assignments."""
@@ -48,15 +62,28 @@ class ACLSolution(
         for stop, operation in enumerate(self.problem.route):
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
+                vehicle_capacity = self.problem.vehicles[vehicle_id].dimension
                 current_load[assigned_deck].load.remove(vehicle_id)
+                current_load[assigned_deck].capacity_used -= vehicle_capacity
+                current_load[assigned_deck].capacity_remaining += vehicle_capacity
             for vehicle_id in operation.load or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
+                vehicle_capacity = self.problem.vehicles[vehicle_id].dimension
                 current_load[assigned_deck].load.append(vehicle_id)
+                current_load[assigned_deck].capacity_used += vehicle_capacity
+                current_load[assigned_deck].capacity_remaining -= vehicle_capacity
             self.current_truck_load[stop] = deepcopy(current_load)        
 
     def __repr__(self):
         """Return a string representation of the solution."""
         return f"ACLSolution(deck_assignment={self.deck_assignment}, current_truck_load={self.current_truck_load})"
+    
+    def __eq__(self, other: 'ACLSolution') -> bool:
+        """Check if two solutions are equal."""
+        if not isinstance(other, ACLSolution):
+            return False
+        return (self.deck_assignment == other.deck_assignment and
+                self.current_truck_load == other.current_truck_load)
 
     #TODO account also car moves for loading
     def sum_moves_to_unload(self) -> int:
@@ -75,8 +102,8 @@ class ACLSolution(
             # Identify decks from which we need to unload
             decks_with_car_to_unload = set()
             for car in cars_to_unload:
-                for deck_id, vehicles in stop_truck_load.items():
-                    if car in vehicles:
+                for deck_id, deck_state in stop_truck_load.items():
+                    if car in deck_state.load:
                         decks_with_car_to_unload.add(deck_id)
                         continue
 
@@ -91,7 +118,7 @@ class ACLSolution(
                     for path in deck.access_via:
                         blocking_vehicles = set()
                         for via_deck_id in path:
-                            blocking_vehicles.update(stop_truck_load[via_deck_id])
+                            blocking_vehicles.update(stop_truck_load[via_deck_id].load)
                         blocking_sets.append(blocking_vehicles - set(cars_to_unload))
                 else:
                     # Freely accessible deck

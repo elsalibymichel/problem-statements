@@ -11,13 +11,13 @@ def sparse_fisher_yates_iter(n: int) -> Iterable[int]:
             # p[r] = p.pop(i, i) # saves memory, takes time
             p[r] = p.get(i, i)  # lazy, but faster
 
-def random_index_iterator(n: int) -> Iterable[int]:
+def random_indexes_iterator(n: int) -> Iterable[int]:
     """Generate a random permutation of indices from 0 to n-1."""
     return sparse_fisher_yates_iter(n)
 
-def random_pair_iterator(n: int, m: int) -> Iterable[tuple[int, int]]:
+def random_pairs_iterator(n: int, m: int) -> Iterable[tuple[int, int]]:
     """Generate random pairs of indices from two ranges."""
-    for v in random_index_iterator(n * m):
+    for v in random_indexes_iterator(n * m):
             i = v // m
             j = v % m                
             yield (i, j)

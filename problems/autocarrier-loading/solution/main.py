@@ -7,16 +7,19 @@ import roar_net_api.algorithms as alg
 
 import sys
 
-def main(input_file: str, output_file: str):
+def main(input_file: str, output_file: str = None):
     """Main function to load the problem and create a solution."""
     problem = ACLProblem(**json.load(open(input_file)))
     
-    # Create a solution instance
-    solution = ACLSolution(problem)
-    solution.from_json(json.load(open(output_file)))
+    # Create a solution instance out of the json file
+    if output_file is not None:
+        initial_solution = ACLSolution(problem, json.load(open(output_file)))
+    else:
+        initial_solution = problem.random_solution()
 
-    new_solution = alg.sa(problem, problem.random_solution(), 10, 50)
-    print(new_solution)
+    print("Initial solution:", initial_solution, initial_solution.objective_value())
+    new_solution = alg.sa(problem, initial_solution, 30, 50.0)
+    print("Final solution:", new_solution, new_solution.objective_value())
     
     # Print the problem and solution for debugging
     #print("Problem:", problem)
@@ -33,18 +36,15 @@ def backup():
     output_file = output_DATA_PATH
     
     main(input_file, output_file)
-    print("Problem and solution loaded successfully.")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python main.py <input_file> <output_file>")
+    if len(sys.argv) != 2:
+        print("Usage: python main.py <input_file>")
         print("Run default calling")
 #        backup()
         sys.exit(1)
     
     input_file = sys.argv[1]
-    output_file = sys.argv[2]
     
-    main(input_file, output_file)
-    print("Problem and solution loaded successfully.")
+    main(input_file)
