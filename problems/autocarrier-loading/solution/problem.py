@@ -70,6 +70,7 @@ class ACLProblem(
         for vehicle_id in vehicles:
             solution.deck_assignment[vehicle_id] = random.choice(decks)
         solution.update_truck_load()
+        solution.complete = True
         return solution
     
     def local_neighbourhood(self) -> ChangeDeckNeighbourhood:

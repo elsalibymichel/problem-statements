@@ -1,14 +1,25 @@
-To test the functionality you can just run:
+To get a help about the functionality you can just run:
 
 ```bash
-python main.py <instance_file> 
+pypy main.py 
+```
 <solution_file>
 ```
-you can run the script with both instance and solution files as arguments:
 
-```bash
-python main.py <instance_file> <solution_file>
+
 ```
+Usage: main.py [OPTIONS] COMMAND [ARGS]...
+
+  Command line interface for the ACL problem.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  constructive-search  Run constructive search algorithms on the ACL...
+  local-search         Run local search algorithms on the ACL problem.
+```
+
 ## Setting up the pypy environment
 
 To set up the pypy environment, you can use uv to create a virtual environment and install the required packages. Here are the steps:
@@ -40,8 +51,14 @@ uv activate
 ```bash
 uv pip install -r requirements.txt
 ```
-5. Run the script with the instance:
+5. Run the command line script
 
 ```bash
-pypy main.py <instance_file>
+pypy main.py constructive-search <instance_file> 
+```
+
+or 
+
+```bash
+pypy main.py local-search first_improvement <instance_file> 
 ```

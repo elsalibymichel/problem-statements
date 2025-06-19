@@ -24,13 +24,15 @@ class AddMove(
         new_solution = deepcopy(solution)
         new_solution.deck_assignment[self.vehicle_id] = self.deck_id
         new_solution.update_truck_load()  # TODO: make it more efficient
+        if all(v for v, d in  solution.deck_assignment.items() if d is not None):
+            new_solution.complete = True
         return new_solution
 
     def lower_bound_increment(self, solution: ACLSolution) -> Optional[int]:
         """Calculate value of the lower bound increment for this move."""
         # TODO: currently this just returns the difference in objective value
         new_solution = self.apply_move(solution.copy_solution())
-        return new_solution.objective_value() - solution.objective_value()
+        return new_solution.lower_bound() - solution.lower_bound()
     
 class AddMoveNeighborhood(
     SupportsRandomMove[ACLSolution, AddMove],
@@ -46,14 +48,10 @@ class AddMoveNeighborhood(
     def random_moves_without_replacement(self, solution: ACLSolution) -> Iterator[AddMove]:
         """Generate random moves without replacement."""
         problem = solution.problem
-        assigned_vehicles = set()
-        for v, d in  solution.deck_assignment.items():
-            if d is not None:
-                assigned_vehicles.add(v)
-        vehicles = list(set(problem.vehicles.keys()) - assigned_vehicles)
+        remaining_vehicles = list(v for v, d in  solution.deck_assignment.items() if d is None)
         decks = list(problem.transporter.decks.keys())
-        for vehicle_index, deck_index in random_pairs_iterator(len(vehicles), len(decks)):
-            vehicle_id = vehicles[vehicle_index]
+        for vehicle_index, deck_index in random_pairs_iterator(len(remaining_vehicles), len(decks)):
+            vehicle_id = remaining_vehicles[vehicle_index]
             deck_id = decks[deck_index]
             yield AddMove(vehicle_id, deck_id)
     
@@ -61,13 +59,9 @@ class AddMoveNeighborhood(
         """Generate all possible moves for the given solution."""
         problem = solution.problem
         # These are the vehicles that do not have a deck assigned yet
-        assigned_vehicles = set()
-        for v, d in  solution.deck_assignment.items():
-            if d is not None:
-                assigned_vehicles.add(v)
-        vehicles = list(set(problem.vehicles.keys()) - assigned_vehicles)
+        remaining_vehicles = list(v for v, d in  solution.deck_assignment.items() if d is None)
         decks = list(problem.transporter.decks.keys())
-        for vehicle_id, deck_id in product(vehicles, decks):
+        for vehicle_id, deck_id in product(remaining_vehicles, decks):
             yield AddMove(vehicle_id, deck_id)            
 
 

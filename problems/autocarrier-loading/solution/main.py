@@ -69,7 +69,7 @@ def constructive_search(input_file: str, output: Path):
         with open(output, 'w') as f:
             json.dump(new_solution.to_json(), f, indent=4)
     else:
-        click.secho(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}", fg='green')
+        click.echo(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}")
 
 # def backup():
 #     BASE_DIR = Path(__file__).resolve().parent

@@ -23,6 +23,7 @@ class ACLSolution(
         self.problem = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
         self.current_truck_load = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
+        self.complete = False
         if json_data is not None:
             self.from_json(json_data)
 
@@ -32,12 +33,16 @@ class ACLSolution(
             vehicle_id = assignment['vehicle']
             deck_id = assignment['deck']
             self.deck_assignment[vehicle_id] = deck_id
+        if all(self.deck_assignment[v] is not None for v in self.problem.vehicles.keys()):
+            self.complete = True
         self.update_truck_load()
 
     def to_json(self) -> List[Dict[str, Any]]:
         """Convert the solution to a JSON serializable format."""
         json_data = []
         for vehicle_id, deck_id in self.deck_assignment.items():
+            if deck_id is None:
+                continue
             json_data.append({
                 'vehicle': vehicle_id,
                 'deck': deck_id
@@ -46,15 +51,17 @@ class ACLSolution(
     
     def __str__(self):
         """Return a string representation of the solution."""
+        min_vector_dimension = min(self.problem.vehicles[v].dimension for v in self.problem.vehicles.keys())
         representation = "ACLSolution:\n"
         representation += "Deck Assignments:\n"
-        for vehicle_id, deck_id in self.deck_assignment.items():
+        for vehicle_id, deck_id in self.deck_assignment.items():            
             representation += f"  Vehicle {vehicle_id} -> Deck {deck_id}\n"
         representation += "Current Truck Load:\n"
         for stop_index, stop_load in enumerate(self.current_truck_load):
             representation += f"  Stop {stop_index}:\n"
             for deck_id, deck_state in stop_load.items():
-                representation += f"    Deck {deck_id}: Load: {deck_state.load}, Capacity (used/remaining): {click.style(f'{deck_state.capacity_remaining}', fg='green' if deck_state.capacity_remaining >= 0 else 'red')}/{deck_state.capacity_used}\n"
+                color = 'red' if deck_state.capacity_remaining < 0 else 'yellow' if deck_state.capacity_remaining < min_vector_dimension else 'green'
+                representation += click.style(f"    Deck {deck_id}: Load: {deck_state.load}, Capacity (remaining/used): {deck_state.capacity_remaining}/{deck_state.capacity_used}\n", fg=color)
         return representation
 
     def copy_solution(self) -> 'ACLSolution':
@@ -62,30 +69,34 @@ class ACLSolution(
         new_solution = ACLSolution(self.problem)
         new_solution.deck_assignment = deepcopy(self.deck_assignment)
         new_solution.current_truck_load = deepcopy(self.current_truck_load)
+        new_solution.complete = self.complete
         return new_solution
     
-    def objective_value(self) -> int:
+    def objective_value(self) -> Optional[int]:
         """Calculate the objective value of the solution."""
         # The objective value is the sum of moves needed to unload vehicles at each stop
         # plus the violation of the deck capacity constraints.
-        moves_to_unload = self.sum_moves_to_unload_and_load()
-        capacity_violations = self.sum_capacity_violations()
-        return moves_to_unload[0] + capacity_violations
+        if not self.complete:
+            return None
+        car_movements = self.sum_moves_to_unload_and_load()
+        capacity_violations = deck_capacity_constraint(self.problem, self, distance_to_feasibility=True)
+        total_capacity_violations = total_capacity_constraint(self.problem, self, distance_to_feasibility=True)
+        # Probably the car_movements[1] should be changed to consider from which deck the vehicle is unloaded
+        return car_movements[0] + capacity_violations + total_capacity_violations
     
-    def sum_capacity_violations(self) -> int:
-        """Return the sum of the capacity violations for all decks."""
-        total_violations = 0
-        for stop_load in self.current_truck_load:
-            for deck_id, deck_state in stop_load.items():
-                if deck_state.capacity_remaining < 0:
-                    total_violations += abs(deck_state.capacity_remaining)
-        assert deck_capacity_constraint(self.problem, self, distance_to_feasibility=True) == total_violations, "The total capacity violations do not match the deck capacity constraint."
-        return total_violations
-
-    def update_truck_load(self):
+    def update_truck_load(self, start_stop: int = 0, end_stop: int = -1) -> None:
         """Update the current truck load based on the deck assignments."""
-        current_load = {deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()}
-        for stop, operation in enumerate(self.problem.route):
+        if start_stop == 0:
+            current_load = {deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()}
+        else:
+            current_load = deepcopy(self.current_truck_load[start_stop - 1])
+        end_stop = end_stop if end_stop >= 0 else len(self.problem.route) + end_stop
+        # Check that start_stop and end_stop are within the range of the route
+        assert 0 <= start_stop < len(self.problem.route), "start_stop must be within the range of the route"
+        assert 0 <= end_stop < len(self.problem.route), "end_stop must be within the range of the route"
+        assert start_stop <= end_stop, "start_stop must be less than or equal to end_stop"
+        for stop in range(start_stop, end_stop + 1):
+            operation = self.problem.route[stop]
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
                 if not assigned_deck: # the vehicle is not assigned to any deck (i.e., partial solution)
@@ -257,8 +268,15 @@ class ACLSolution(
                 min_moves_per_stop.append(0)
                 min_sets_per_stop.append(set())
 
-        def lower_bound(self) -> int:
-            """Calculate a lower bound for the objective value."""
-            return self.objective_value()
-
         return sum(min_moves_per_stop), min_sets_per_stop
+    
+    def lower_bound(self) -> int:
+        """
+        Calculate a lower bound for the objective value.
+        Basically, it is the same as the objective value, but it does not require the solution to be complete.
+        """
+        car_movements = self.sum_moves_to_unload_and_load()
+        capacity_violations = deck_capacity_constraint(self.problem, self, distance_to_feasibility=True)
+        total_capacity_violations = total_capacity_constraint(self.problem, self, distance_to_feasibility=True)
+        # Probably the car_movements[1] should be changed to consider from which deck the vehicle is unloaded
+        return car_movements[0] + capacity_violations + total_capacity_violations
