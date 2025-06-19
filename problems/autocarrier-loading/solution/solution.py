@@ -63,15 +63,15 @@ class ACLSolution(
             for vehicle_id in operation.unload or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
                 vehicle_capacity = self.problem.vehicles[vehicle_id].dimension
-                current_load[assigned_deck].load.remove(vehicle_id)
-                current_load[assigned_deck].capacity_used -= vehicle_capacity
-                current_load[assigned_deck].capacity_remaining += vehicle_capacity
+                #current_load[assigned_deck].load.remove(vehicle_id)
+                #current_load[assigned_deck].capacity_used -= vehicle_capacity
+                #current_load[assigned_deck].capacity_remaining += vehicle_capacity
             for vehicle_id in operation.load or []:
                 assigned_deck = self.deck_assignment.get(vehicle_id)
                 vehicle_capacity = self.problem.vehicles[vehicle_id].dimension
-                current_load[assigned_deck].load.append(vehicle_id)
-                current_load[assigned_deck].capacity_used += vehicle_capacity
-                current_load[assigned_deck].capacity_remaining -= vehicle_capacity
+                #current_load[assigned_deck].load.append(vehicle_id)
+                #current_load[assigned_deck].capacity_used += vehicle_capacity
+                #current_load[assigned_deck].capacity_remaining -= vehicle_capacity
             self.current_truck_load[stop] = deepcopy(current_load)        
 
     def __repr__(self):
@@ -144,6 +144,7 @@ class ACLSolution(
     def sum_moves_to_unload_and_load(self) -> int:
         """Return the sum of the minimum unnecessary car moves needed at any stop to access vehicles to unload."""
         min_moves_per_stop = []
+        min_sets_per_stop = []
 
         for stop_index, stop_truck_load in enumerate(self.current_truck_load):
             if stop_index == len(self.problem.route)-1:
@@ -210,16 +211,21 @@ class ACLSolution(
 
             # Compute the minimal number of moves (for both load and unload) needed across all combinations of paths
             moves_per_combination = []
+
             for combination in itertools.product(*path_combinations.values()):
                 cars_to_move = set()
                 for car_set in combination:
                     cars_to_move.update(car_set)
-                moves_per_combination.append(len(cars_to_move))
+                moves_per_combination.append((len(cars_to_move), cars_to_move))
 
             if moves_per_combination:
-                min_moves_per_stop.append(min(moves_per_combination))
+                min_len, min_cars = min(moves_per_combination, key=lambda x: x[0])
+                min_moves_per_stop.append(min_len)
+                #min_sets_per_stop.append(min_cars + set(cars_to_unload))
+                min_sets_per_stop.append(min_cars.union(cars_to_unload))
             else:
                 min_moves_per_stop.append(0)
+                min_sets_per_stop.append(set())
 
-        print("Mover for unload and load for each stop (ignoring stop 0): ", min_moves_per_stop)
-        return sum(min_moves_per_stop)
+        print("Mover for unload and load for each stop (ignoring stop 0): ", min_moves_per_stop, min_sets_per_stop)
+        return sum(min_moves_per_stop),min_sets_per_stop
