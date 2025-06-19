@@ -43,7 +43,7 @@ class ACLSolution(
         """Calculate the objective value of the solution."""
         # The objective value is the sum of moves needed to unload vehicles at each stop
         # plus the violation of the deck capacity constraints.
-        moves_to_unload = self.sum_moves_to_unload() 
+        moves_to_unload = self.sum_moves_to_unload_and_load()
         capacity_violations = self.sum_capacity_violations()
         return moves_to_unload + capacity_violations
     
@@ -85,7 +85,6 @@ class ACLSolution(
         return (self.deck_assignment == other.deck_assignment and
                 self.current_truck_load == other.current_truck_load)
 
-    #TODO account also car moves for loading
     def sum_moves_to_unload(self) -> int:
         """Return the sum of the minimum unnecessary car moves needed at any stop to access vehicles to unload."""
         min_moves_per_stop = []
@@ -139,10 +138,9 @@ class ACLSolution(
                 min_moves_per_stop.append(min(moves_per_combination))
             else:
                 min_moves_per_stop.append(0)
-        # print("Mover for unload for each stop (ignoring stop 0): ", min_moves_per_stop)
+        print("Mover for unload for each stop (ignoring stop 0): ", min_moves_per_stop)
         return sum(min_moves_per_stop)
 
-    #TODO test this function
     def sum_moves_to_unload_and_load(self) -> int:
         """Return the sum of the minimum unnecessary car moves needed at any stop to access vehicles to unload."""
         min_moves_per_stop = []
@@ -160,53 +158,55 @@ class ACLSolution(
 
             path_combinations = {}
 
-            # Unloading: identify decks from which we need to unload
-            decks_with_car_to_unload = set()
-            for car in cars_to_unload:
-                for deck_id, vehicles in stop_truck_load.items():
-                    if car in vehicles:
-                        decks_with_car_to_unload.add(deck_id)
-                        continue
-            # Unloading: build blocking vehicle sets per deck
-            for deck_id in decks_with_car_to_unload:
-                deck = self.problem.transporter.decks[deck_id]
-                blocking_sets = []
-                if deck.access_via:
-                    # Add blocking vehicles from access paths
-                    for path in deck.access_via:
-                        blocking_vehicles = set()
-                        for via_deck_id in path:
-                            blocking_vehicles.update(stop_truck_load[via_deck_id])
-                        blocking_sets.append(blocking_vehicles - set(cars_to_unload))
-                else:
-                    # Freely accessible deck
-                    blocking_sets.append(set())
-                #TODO for now, we are assume the absence of blocking cars on the same deck, but it should be considered
-                path_combinations[deck_id + "-unload"] = blocking_sets
+            #-------------------UNLOADING--------------------
+            if cars_to_unload:
+                # Unloading: identify decks from which we need to unload
+                decks_with_car_to_unload = set()
+                for car in cars_to_unload:
+                    for deck_id, vehicles in stop_truck_load.items():
+                        if car in vehicles.load:
+                            decks_with_car_to_unload.add(deck_id)
+                            continue
+                # Unloading: build blocking vehicle sets per deck
+                for deck_id in decks_with_car_to_unload:
+                    deck = self.problem.transporter.decks[deck_id]
+                    blocking_sets = []
+                    if deck.access_via:
+                        # Add blocking vehicles from access paths
+                        for path in deck.access_via:
+                            blocking_vehicles = set()
+                            for via_deck_id in path:
+                                blocking_vehicles.update(stop_truck_load[via_deck_id].load)
+                            blocking_sets.append(blocking_vehicles - set(cars_to_unload))
+                    else:
+                        # Freely accessible deck
+                        blocking_sets.append(set())
+                    #TODO for now, we are assume the absence of blocking cars on the same deck, but it should be considered
+                    path_combinations[deck_id + "-unload"] = blocking_sets
 
-            # Loading: identify decks from which we need to unload
-            decks_with_car_to_load = set()
-            for car in cars_to_load:
-                for deck_id, vehicles in stop_truck_load.items():
-                    if car in vehicles:
-                        decks_with_car_to_load.add(deck_id)
-                        continue
-            # Loading: build blocking vehicle sets per deck
-            for deck_id in decks_with_car_to_load:
-                deck = self.problem.transporter.decks[deck_id]
-                blocking_sets = []
-                if deck.access_via:
-                    # Add blocking vehicles from access paths
-                    for path in deck.access_via:
-                        blocking_vehicles = set()
-                        for via_deck_id in path:
-                            blocking_vehicles.update(stop_truck_load[via_deck_id])
-                        blocking_sets.append(blocking_vehicles - set(cars_to_unload))
-                else:
-                    # Freely accessible deck
-                    blocking_sets.append(set())
-                # For loading, it's not necessary to consider other cars on same deck
-                path_combinations[deck_id + "-load"] = blocking_sets
+            #--------------------LOADING---------------------
+            if cars_to_load:
+                # Loading: identify decks from which we need to unload
+                decks_with_car_to_load = set()
+                for car_id in cars_to_load:
+                    deck_id = self.deck_assignment[car_id]
+                    decks_with_car_to_load.add(deck_id)
+                # Loading: build blocking vehicle sets per deck
+                for deck_id in decks_with_car_to_load:
+                    deck = self.problem.transporter.decks[deck_id]
+                    blocking_sets = []
+                    if deck.access_via:
+                        # Add blocking vehicles from access paths
+                        for path in deck.access_via:
+                            blocking_vehicles = set()
+                            for via_deck_id in path:
+                                blocking_vehicles.update(stop_truck_load[via_deck_id].load)
+                            blocking_sets.append(blocking_vehicles - set(cars_to_unload))
+                    else:
+                        # Freely accessible deck
+                        blocking_sets.append(set())
+                    # For loading, it's not necessary to consider other cars on same deck
+                    path_combinations[deck_id + "-load"] = blocking_sets
 
             # Compute the minimal number of moves (for both load and unload) needed across all combinations of paths
             moves_per_combination = []
@@ -221,5 +221,5 @@ class ACLSolution(
             else:
                 min_moves_per_stop.append(0)
 
-        # print("Mover for unload and load for each stop (ignoring stop 0): ", min_moves_per_stop)
+        print("Mover for unload and load for each stop (ignoring stop 0): ", min_moves_per_stop)
         return sum(min_moves_per_stop)

@@ -17,12 +17,12 @@ class ChangeDeckMove(
     def apply_move(self, solution: ACLSolution) -> ACLSolution:
         new_solution = deepcopy(solution)
         new_solution.deck_assignment[self.vehicle_id] = self.deck_id
-        new_solution.update_truck_load()
+        new_solution.update_truck_load() #TODO: make it more efficient
         return new_solution
     
     def objective_value_increment(self, solution: ACLSolution) -> Optional[int]:
         """Calculate the objective value increment for this move."""
-        # TODO: currentl this just returns the difference in objective value
+        # TODO: currently this just returns the difference in objective value
         new_solution = self.apply_move(solution.copy_solution())
         return new_solution.objective_value() - solution.objective_value()
 
@@ -59,4 +59,3 @@ class ChangeDeckNeighbourhood(
                 if current_deck == deck_id:
                     continue
                 yield ChangeDeckMove(vehicle_id, deck_id)
-
