@@ -15,7 +15,7 @@ def main(input_file: str, output_file: str):
     solution = ACLSolution(problem)
     solution.from_json(json.load(open(output_file)))
 
-    new_solution = alg.rls(problem, problem.random_solution(), 10)
+    new_solution = alg.sa(problem, problem.random_solution(), 10, 50)
     print(new_solution)
     
     # Print the problem and solution for debugging
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python main.py <input_file> <output_file>")
         print("Run default calling")
-        backup()
+#        backup()
         sys.exit(1)
     
     input_file = sys.argv[1]

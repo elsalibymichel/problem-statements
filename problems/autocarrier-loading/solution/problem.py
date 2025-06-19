@@ -66,6 +66,10 @@ class ACLProblem(
         solution.update_truck_load()
         return solution
     
+    def local_neighbourhood(self) -> ChangeDeckNeighbourhood:
+        """Return a neighbourhood that allows changing the deck assignment of vehicles."""
+        return ChangeDeckNeighbourhood(self)
+    
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python problem.py <input_file>")
