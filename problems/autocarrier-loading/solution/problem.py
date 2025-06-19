@@ -6,13 +6,15 @@ from typing import Dict, List, Optional, Self
 import sys
 import json
 from local_search import ChangeDeckNeighbourhood
+from constructive_search import AddMoveNeighborhood
 
-from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbourhood
+from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbourhood, SupportsConstructionNeighbourhood
 
 from solution import ACLSolution
 
 class ACLProblem(
     SupportsLocalNeighbourhood[ChangeDeckNeighbourhood],
+    SupportsConstructionNeighbourhood[AddMoveNeighborhood],
     SupportsRandomSolution[ACLSolution]
 ):
     class Data(BaseModel):
@@ -73,6 +75,10 @@ class ACLProblem(
     def local_neighbourhood(self) -> ChangeDeckNeighbourhood:
         """Return a neighbourhood that allows changing the deck assignment of vehicles."""
         return ChangeDeckNeighbourhood(self)
+    
+    def construction_neighbourhood(self) -> AddMoveNeighborhood:
+        """Return a neighbourhood that allows adding decks to vehicles."""
+        return AddMoveNeighborhood(self)
     
 if __name__ == "__main__":
     if len(sys.argv) != 2:

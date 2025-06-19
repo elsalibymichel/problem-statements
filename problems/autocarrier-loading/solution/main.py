@@ -35,7 +35,7 @@ def local_search(algorithm: str, input_file: str, initial_solution: Path, output
         # Generate a random initial solution
         initial_solution = problem.random_solution()
     
-    click.secho(f"Initial solution: [{initial_solution.objective_value()}]\n{initial_solution}", fg='blue')
+    click.secho(f"Initial solution: [{initial_solution.objective_value()}]\n{initial_solution}")
 
     # Run the local search algorithm selected
     if algorithm == 'best_improvement':
@@ -48,12 +48,7 @@ def local_search(algorithm: str, input_file: str, initial_solution: Path, output
         with open(output, 'w') as f:
             json.dump(new_solution.to_json(), f, indent=4)
     else:
-        # Print the final solution to stdout
-        if new_solution.objective_value() < initial_solution.objective_value():
-            color = 'green'
-        else:
-            color = 'orange'
-        click.secho(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}", fg=color)
+        click.echo(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}")
 
 
 @cli.command()
@@ -74,12 +69,7 @@ def constructive_search(input_file: str, output: Path):
         with open(output, 'w') as f:
             json.dump(new_solution.to_json(), f, indent=4)
     else:
-        # Print the final solution to stdout
-        if new_solution.objective_value() < initial_solution.objective_value():
-            color = 'green'
-        else:
-            color = 'orange'
-        click.secho(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}", fg=color)
+        click.secho(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}", fg='green')
 
 # def backup():
 #     BASE_DIR = Path(__file__).resolve().parent

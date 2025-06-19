@@ -1,19 +1,21 @@
 from copy import deepcopy
 from typing import Optional
-
-from roar_net_api.operations import SupportsApplyMove, SupportsLowerBoundIncrement, SupportsObjectiveValueIncrement
+from itertools import product
+from roar_net_api.operations import SupportsApplyMove, SupportsLowerBoundIncrement, SupportsRandomMove, SupportsLowerBoundIncrement
+from typing import Iterator
+from utils import random_pairs_iterator
+import sys
 
 from solution import ACLSolution
 
 
 class AddMove(
     SupportsApplyMove[ACLSolution],
-    SupportsLowerBoundIncrement[ACLSolution]
+    SupportsLowerBoundIncrement
 ):
     """
     Move to assign a deck to a car.
     """
-
     def __init__(self, vehicle_id: int, deck_id: int):
         self.vehicle_id = vehicle_id
         self.deck_id = deck_id
@@ -29,3 +31,43 @@ class AddMove(
         # TODO: currently this just returns the difference in objective value
         new_solution = self.apply_move(solution.copy_solution())
         return new_solution.objective_value() - solution.objective_value()
+    
+class AddMoveNeighborhood(
+    SupportsRandomMove[ACLSolution, AddMove],
+    SupportsLowerBoundIncrement[ACLSolution, AddMove]
+):
+    def __init__(self, problem: 'ACLProblem'):
+        self.problem = problem
+
+    def random_move(self, solution: ACLSolution) -> Optional[AddMove]:
+        """Generate a random constructive move for the given solution."""
+        return next(self.random_moves_without_replacement(solution), None)
+    
+    def random_moves_without_replacement(self, solution: ACLSolution) -> Iterator[AddMove]:
+        """Generate random moves without replacement."""
+        problem = solution.problem
+        assigned_vehicles = set()
+        for v, d in  solution.deck_assignment.items():
+            if d is not None:
+                assigned_vehicles.add(v)
+        vehicles = list(set(problem.vehicles.keys()) - assigned_vehicles)
+        decks = list(problem.transporter.decks.keys())
+        for vehicle_index, deck_index in random_pairs_iterator(len(vehicles), len(decks)):
+            vehicle_id = vehicles[vehicle_index]
+            deck_id = decks[deck_index]
+            yield AddMove(vehicle_id, deck_id)
+    
+    def moves(self, solution: ACLSolution) -> Iterator[AddMove]:
+        """Generate all possible moves for the given solution."""
+        problem = solution.problem
+        # These are the vehicles that do not have a deck assigned yet
+        assigned_vehicles = set()
+        for v, d in  solution.deck_assignment.items():
+            if d is not None:
+                assigned_vehicles.add(v)
+        vehicles = list(set(problem.vehicles.keys()) - assigned_vehicles)
+        decks = list(problem.transporter.decks.keys())
+        for vehicle_id, deck_id in product(vehicles, decks):
+            yield AddMove(vehicle_id, deck_id)            
+
+
