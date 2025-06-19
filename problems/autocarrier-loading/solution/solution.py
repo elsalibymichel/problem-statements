@@ -3,8 +3,9 @@ from copy import deepcopy
 
 from roar_net_api.operations import SupportsObjectiveValue, SupportsCopySolution
 
-from data_helper_class import Operation, Vehicle, Deck, Transporter
+from data_helper_class import Vehicle
 from dataclasses import dataclass
+from typing import Dict, List, Any
 
 @dataclass
 class DeckState():
@@ -16,12 +17,12 @@ class ACLSolution(
     SupportsObjectiveValue,
     SupportsCopySolution
 ):
-    def __init__(self, problem):
+    def __init__(self, problem : 'ACLProblem'):
         self.problem = problem
         self.deck_assignment = {v: None for v in problem.vehicles.keys()}
         self.current_truck_load = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
 
-    def from_json(self, json_data):
+    def from_json(self, json_data :  List[Dict[str, Any]]) -> None:
         """Load the solution from a JSON string."""
         for assignment in json_data:
             vehicle_id = assignment['vehicle']
@@ -29,12 +30,17 @@ class ACLSolution(
             self.deck_assignment[vehicle_id] = deck_id
         self.update_truck_load()
 
-    def copy(self):
+    def copy_solution(self):
         """Create a deep copy of the solution."""
         new_solution = ACLSolution(self.problem)
         new_solution.deck_assignment = deepcopy(self.deck_assignment)
         new_solution.current_truck_load = deepcopy(self.current_truck_load)
         return new_solution
+    
+    def objective_value(self) -> int:
+        """Calculate the objective value of the solution."""
+        # The objective value is the sum of moves needed to unload vehicles at each stop
+        return self.sum_moves_to_unload()
 
     def update_truck_load(self):
         """Update the current truck load based on the deck assignments."""
