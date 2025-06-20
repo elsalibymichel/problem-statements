@@ -11,6 +11,7 @@ from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbo
 
 from solution import ACLSolution
 
+
 class ACLProblem(
     SupportsLocalNeighbourhood[ChangeDeckNeighbourhood],
     SupportsConstructionNeighbourhood[AddMoveNeighborhood],

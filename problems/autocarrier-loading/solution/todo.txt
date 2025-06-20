@@ -11,7 +11,7 @@
             - (occupation) a vector of vectors, each representing the order of the cars "currently" loaded on a deck
 2. solution.py
     - Add two vectors for each stop the order of loading and unloading
-        - Firstly assume that the loading order is the based on lexicographic order of the vehicles
+        - Firstly assume that the loading order is the based on lexicographic order of the vehicles 
 3. Computation of the number of moves for a unloading cars at a stop
     - Pseudocode:
         For each stop, given unloading_cars, current_track_load:

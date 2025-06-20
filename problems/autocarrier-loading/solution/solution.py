@@ -25,6 +25,7 @@ class DeckState():
 # 5. at each stop, store the vehicles that are loaded and unloaded in the deck state so to speed up the objective value calculation
 # 6. implement a method to check if the solution is feasible (i.e., all vehicles are assigned to a deck and all deck capacities are respected)
 # 7. implement a method to check if the solution is complete (i.e., all vehicles are assigned to a deck)
+# 8. to speed up the objective value calculation, store a lookup table of the movements needed to unload each vehicle from each deck in any possible configuration (generate the movements in advance including all the possible situations)
 
 class ACLSolution(
     SupportsObjectiveValue[int],
