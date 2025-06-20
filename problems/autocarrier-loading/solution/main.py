@@ -2,13 +2,12 @@ from problem import ACLProblem
 from solution import ACLSolution
 import json
 from pathlib import Path
-import local_search
 import click
 import roar_net_api.algorithms as alg
+from typing import Optional
+
 import logging
 logging.basicConfig(level=logging.INFO)
-
-import sys
 
 @click.group()
 def cli():
@@ -18,9 +17,9 @@ def cli():
 @cli.command()
 @click.argument('algorithm', type=click.Choice(['first_improvement', 'best_improvement'], case_sensitive=False))
 @click.argument('input_file', type=click.Path(exists=True))
-@click.option('--initial_solution', type=click.Path(), default=None, help='Path to the output file for the initial solution.')
+@click.option('--initial-solution-file', type=click.Path(), default=None, help='Path to the output file for the initial solution.')
 @click.option('--output', type=click.Path(), default=None, help='Path to the output file for the final solution.')
-def local_search(algorithm: str, input_file: str, initial_solution: Path, output: Path):
+def local_search(algorithm: str, input_file: str, initial_solution_file: Optional[Path], output: Optional[Path]):
     """
     Run local search algorithms on the ACL problem.
     ALGORITHM: The local search algorithm to use (first_improvement or best_improvement).
@@ -30,9 +29,9 @@ def local_search(algorithm: str, input_file: str, initial_solution: Path, output
     """
     problem = ACLProblem(**json.load(open(input_file)))
 
-    if initial_solution is not None:
+    if initial_solution_file:
         # Create a solution instance out of the json file
-        initial_solution = ACLSolution(problem, json.load(open(initial_solution)))    
+        initial_solution = ACLSolution(problem, json.load(open(initial_solution_file)))    
     else:
         # Generate a random initial solution
         initial_solution = problem.random_solution()
@@ -40,10 +39,14 @@ def local_search(algorithm: str, input_file: str, initial_solution: Path, output
     click.secho(f"Initial solution: [{initial_solution.objective_value()}]\n{initial_solution}")
 
     # Run the local search algorithm selected
+    new_solution : Optional[ACLSolution] = None
     if algorithm == 'best_improvement':
         new_solution = alg.best_improvement(problem, initial_solution)
     elif algorithm == 'first_improvement':
         new_solution = alg.first_improvement(problem, initial_solution)
+    else:
+        click.echo(f"Unknown algorithm: {algorithm}")
+        return
 
     if output is not None:
         # Save the final solution to the output file
@@ -56,7 +59,7 @@ def local_search(algorithm: str, input_file: str, initial_solution: Path, output
 @cli.command()
 @click.argument('input_file', type=click.Path(exists=True))
 @click.option('--output', type=click.Path(), default=None, help='Path to the output file for the final solution.')
-def constructive_search(input_file: str, output: Path):
+def constructive_search(input_file: str, output: Optional[Path]):
     """
     Run constructive search algorithms on the ACL problem.
     INPUT_FILE: Path to the input JSON file containing the ACL problem data.
@@ -72,16 +75,6 @@ def constructive_search(input_file: str, output: Path):
             json.dump(new_solution.to_json(), f, indent=4)
     else:
         click.echo(f"Final solution: [{new_solution.objective_value()}]\n{new_solution}")
-
-# def backup():
-#     BASE_DIR = Path(__file__).resolve().parent
-#     input_DATA_PATH = BASE_DIR.parent /"data"/"11CT_401696_s5_v13.json"  
-#     output_DATA_PATH = BASE_DIR.parent /"solution"/"solution_example.json"  
-
-#     input_file = input_DATA_PATH
-#     output_file = output_DATA_PATH
-    
-#     main(input_file, output_file)
 
 # For a command line interface, we use the click library to handle arguments and options.
 if __name__ == "__main__":

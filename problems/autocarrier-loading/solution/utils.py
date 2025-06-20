@@ -49,4 +49,4 @@ def random_pairs_iterator(n: int, m: int) -> Iterable[tuple[int, int]]:
             j = v % m                
             yield (i, j)
 
-def random
+
