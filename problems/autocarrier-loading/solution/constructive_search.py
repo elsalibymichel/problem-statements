@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Optional
 from itertools import product
-from roar_net_api.operations import SupportsApplyMove, SupportsLowerBoundIncrement, SupportsRandomMove, SupportsLowerBoundIncrement
+from roar_net_api.operations import SupportsApplyMove, SupportsLowerBoundIncrement, SupportsRandomMove, SupportsLowerBoundIncrement, SupportsMoves
 from typing import Iterator
 from utils import random_pairs_iterator
 import sys
@@ -11,7 +11,7 @@ from solution import ACLSolution
 
 class AddMove(
     SupportsApplyMove[ACLSolution],
-    SupportsLowerBoundIncrement
+    SupportsLowerBoundIncrement[ACLSolution, int]
 ):
     """
     Move to assign a deck to a car.
@@ -36,7 +36,8 @@ class AddMove(
     
 class AddMoveNeighborhood(
     SupportsRandomMove[ACLSolution, AddMove],
-    SupportsLowerBoundIncrement[ACLSolution, AddMove]
+    SupportsLowerBoundIncrement[ACLSolution, AddMove],
+    SupportsMoves[ACLSolution, AddMove]
 ):
     def __init__(self, problem: 'ACLProblem'):
         self.problem = problem

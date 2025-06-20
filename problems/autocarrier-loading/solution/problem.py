@@ -8,14 +8,15 @@ import json
 from local_search import ChangeDeckNeighbourhood
 from constructive_search import AddMoveNeighborhood
 
-from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbourhood, SupportsConstructionNeighbourhood
+from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbourhood, SupportsConstructionNeighbourhood, SupportsEmptySolution
 
 from solution import ACLSolution
 
 class ACLProblem(
     SupportsLocalNeighbourhood[ChangeDeckNeighbourhood],
     SupportsConstructionNeighbourhood[AddMoveNeighborhood],
-    SupportsRandomSolution[ACLSolution]
+    SupportsRandomSolution[ACLSolution],
+    SupportsEmptySolution[ACLSolution]
 ):
     class Data(BaseModel):
         route: List[Operation]

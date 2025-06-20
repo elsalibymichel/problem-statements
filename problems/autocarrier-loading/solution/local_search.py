@@ -1,14 +1,14 @@
 from copy import deepcopy
 from typing import Optional, Iterator
 
-from roar_net_api.operations import SupportsApplyMove, SupportsRandomMove, SupportsObjectiveValueIncrement
+from roar_net_api.operations import SupportsApplyMove, SupportsRandomMove, SupportsMoves, SupportsObjectiveValueIncrement, SupportsRandomMovesWithoutReplacement
 from solution import ACLSolution
 import random
 from utils import random_pairs_iterator
 
 class ChangeDeckMove(
     SupportsApplyMove[ACLSolution],
-    SupportsObjectiveValueIncrement
+    SupportsObjectiveValueIncrement[ACLSolution, int]
 ):
     def __init__(self, vehicle_id: str, deck_id: str):
         self.vehicle_id = vehicle_id
@@ -31,7 +31,9 @@ class ChangeDeckMove(
         return new_solution.objective_value() - solution.objective_value()
 
 class ChangeDeckNeighbourhood(
-    SupportsRandomMove[ACLSolution, ChangeDeckMove]
+    SupportsRandomMove[ACLSolution, ChangeDeckMove],
+    SupportsMoves[ACLSolution, ChangeDeckMove],
+    SupportsRandomMovesWithoutReplacement[ACLSolution, ChangeDeckMove]
 ):
     def __init__(self, problem: 'ACLProblem'):
         self.problem = problem
