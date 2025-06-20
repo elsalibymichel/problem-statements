@@ -3,8 +3,6 @@ import random
 from data_helper_class import Operation, Vehicle, Transporter
 from pydantic import BaseModel, model_validator
 from typing import Dict, List, Self, Any
-import sys
-import json
 from local_search import ChangeDeckNeighbourhood
 from constructive_search import AddMoveNeighborhood
 from utils import JSONValue
@@ -85,17 +83,3 @@ class ACLProblem(
         """Return a neighbourhood that allows adding decks to vehicles."""
         return AddMoveNeighborhood(self)
     
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python problem.py <input_file>")
-        sys.exit(1)
-    input_file = sys.argv[1]        
-    try:
-        with open(input_file, 'r') as file:
-            data = json.load(file)
-        problem = ACLProblem(**data)
-        print(f"Problem: {problem}")
-        print(f"Random solution: {problem.random_solution()}")
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)

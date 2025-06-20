@@ -18,6 +18,14 @@ class DeckState():
     capacity_remaining: int
     capacity_used: int
 
+# TODO: 
+# 1. store the solution objective value and/or the lower bound in the solution class to avoid recomputing it every time
+# 3. find a better lower bound for the solution
+# 4. implement a more efficient update_truck_load method that only updates the affected stops
+# 5. at each stop, store the vehicles that are loaded and unloaded in the deck state so to speed up the objective value calculation
+# 6. implement a method to check if the solution is feasible (i.e., all vehicles are assigned to a deck and all deck capacities are respected)
+# 7. implement a method to check if the solution is complete (i.e., all vehicles are assigned to a deck)
+
 class ACLSolution(
     SupportsObjectiveValue[int],
     SupportsCopySolution,

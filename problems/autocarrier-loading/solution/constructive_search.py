@@ -33,8 +33,11 @@ class AddMove(
 
     def lower_bound_increment(self, solution: ACLSolution) -> Optional[int]:
         """Calculate value of the lower bound increment for this move."""
-        # TODO: currently this just returns the difference in objective value
+        # TODO: currently this just returns the difference in lower bounds
+        # do it more efficiently by only updating the affected stops
         new_solution = self.apply_move(solution.copy_solution())
+        # Notice that the lower bound is looked from a diferent perspective than the objective value
+        # so we return the difference in lower bounds from the new solution to the current solution instad of the other way around
         return new_solution.lower_bound() - solution.lower_bound()
     
 class AddMoveNeighborhood(
@@ -50,13 +53,16 @@ class AddMoveNeighborhood(
         return next(self.random_moves_without_replacement(solution), None)
     
     def random_moves_without_replacement(self, solution: ACLSolution) -> Iterator[AddMove]:
-        """Generate random moves without replacement."""
+        """Generate random moves without replacement."""        
         problem = solution.problem
+        # Get the vehicles that do not have a deck assigned yet
         remaining_vehicles = list(v for v, d in  solution.deck_assignment.items() if d is None)
+        # Get the decks available in the problem
         decks = list(problem.transporter.decks.keys())
         for vehicle_index, deck_index in random_pairs_iterator(len(remaining_vehicles), len(decks)):
             vehicle_id = remaining_vehicles[vehicle_index]
             deck_id = decks[deck_index]
+            # TODO: check if the deck can be assigned to the vehicle so not to violate capacity constraints (feebdback from @carlosfonseca)
             yield AddMove(vehicle_id, deck_id)
     
     def moves(self, solution: ACLSolution) -> Iterator[AddMove]:
@@ -66,6 +72,7 @@ class AddMoveNeighborhood(
         remaining_vehicles = list(v for v, d in  solution.deck_assignment.items() if d is None)
         decks = list(problem.transporter.decks.keys())
         for vehicle_id, deck_id in product(remaining_vehicles, decks):
+            # TODO: check if the deck can be assigned to the vehicle so not to violate capacity constraints (feebdback from @carlosfonseca)
             yield AddMove(vehicle_id, deck_id)            
 
 

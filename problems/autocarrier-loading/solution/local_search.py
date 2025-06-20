@@ -1,9 +1,7 @@
-from copy import deepcopy
 from typing import Optional, Iterator
 
 from roar_net_api.operations import SupportsApplyMove, SupportsRandomMove, SupportsMoves, SupportsObjectiveValueIncrement, SupportsRandomMovesWithoutReplacement
 from solution import ACLSolution
-import random
 from utils import random_pairs_iterator
 
 class ChangeDeckMove(
