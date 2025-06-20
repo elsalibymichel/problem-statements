@@ -1,6 +1,16 @@
 # Some utility functions for the project
 import random
-from typing import Iterable, Dict
+from typing import Iterable, Dict, Union, List
+
+JSONValue = Union[
+    None,
+    bool,
+    int,
+    float,
+    str,
+    List['JSONValue'],
+    Dict[str, 'JSONValue']
+]
 
 def sparse_fisher_yates_iter(n: int) -> Iterable[int]:
     p: Dict[int, int] = dict()

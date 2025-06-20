@@ -1,11 +1,11 @@
-from copy import deepcopy
 from typing import Optional
 from itertools import product
-from roar_net_api.operations import SupportsApplyMove, SupportsLowerBoundIncrement, SupportsRandomMove, SupportsLowerBoundIncrement, SupportsMoves
-from typing import Iterator
+from roar_net_api.operations import SupportsApplyMove, SupportsLowerBoundIncrement, SupportsRandomMove, SupportsMoves
+from typing import Iterator, TYPE_CHECKING
 from utils import random_pairs_iterator
-import sys
 
+if TYPE_CHECKING:
+    from problem import ACLProblem
 from solution import ACLSolution
 
 
@@ -16,12 +16,15 @@ class AddMove(
     """
     Move to assign a deck to a car.
     """
-    def __init__(self, vehicle_id: int, deck_id: int):
-        self.vehicle_id = vehicle_id
-        self.deck_id = deck_id
+    def __init__(self, vehicle_id: str, deck_id: str):
+        self.vehicle_id : str = vehicle_id
+        self.deck_id : str = deck_id
+
+    def __repr__(self):
+        return f"AddMove(vehicle_id={self.vehicle_id}, deck_id={self.deck_id})"
 
     def apply_move(self, solution: ACLSolution) -> ACLSolution:
-        new_solution = deepcopy(solution)
+        new_solution : ACLSolution = solution.copy_solution()
         new_solution.deck_assignment[self.vehicle_id] = self.deck_id
         new_solution.update_truck_load()  # TODO: make it more efficient
         if all(v for v, d in  solution.deck_assignment.items() if d is not None):
@@ -40,7 +43,7 @@ class AddMoveNeighborhood(
     SupportsMoves[ACLSolution, AddMove]
 ):
     def __init__(self, problem: 'ACLProblem'):
-        self.problem = problem
+        self.problem : 'ACLProblem' = problem
 
     def random_move(self, solution: ACLSolution) -> Optional[AddMove]:
         """Generate a random constructive move for the given solution."""

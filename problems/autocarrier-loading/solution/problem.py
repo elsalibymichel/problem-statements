@@ -1,12 +1,13 @@
 import random
 
-from data_helper_class import Operation,Vehicle,Deck,Transporter
+from data_helper_class import Operation, Vehicle, Transporter
 from pydantic import BaseModel, model_validator
-from typing import Dict, List, Optional, Self
+from typing import Dict, List, Self, Any
 import sys
 import json
 from local_search import ChangeDeckNeighbourhood
 from constructive_search import AddMoveNeighborhood
+from utils import JSONValue
 
 from roar_net_api.operations import SupportsRandomSolution, SupportsLocalNeighbourhood, SupportsConstructionNeighbourhood, SupportsEmptySolution
 
@@ -24,7 +25,9 @@ class ACLProblem(
         transporter: Transporter
 
         @model_validator(mode='before')
-        def populate_ids(cls, values: Dict) -> Dict:
+        def populate_ids(cls, values: JSONValue) -> JSONValue:
+            if type(values) is not dict:
+                return values
             if 'vehicles' in values:
                 # Transform vehicles dict to include IDs
                 vehicles_with_ids = {}
@@ -54,7 +57,7 @@ class ACLProblem(
                 raise ValueError("The last operation in the route must not have a 'load' defined.")
             return self
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs : Dict[str, Any]):
         tmp = ACLProblem.Data(**kwargs)
         self.route = tmp.route
         self.vehicles = tmp.vehicles

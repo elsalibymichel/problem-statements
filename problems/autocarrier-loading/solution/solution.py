@@ -6,8 +6,11 @@ from roar_net_api.operations import SupportsObjectiveValue, SupportsLowerBound, 
 
 from data_helper_class import Vehicle
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 from constraints import deck_capacity_constraint, total_capacity_constraint
+
+if TYPE_CHECKING:
+    from problem import ACLProblem
 
 @dataclass
 class DeckState():
@@ -21,10 +24,10 @@ class ACLSolution(
     SupportsLowerBound[int]
 ):
     def __init__(self, problem : 'ACLProblem', json_data: Optional[List[Dict[str, Any]]] = None):
-        self.problem = problem
-        self.deck_assignment = {v: None for v in problem.vehicles.keys()}
-        self.current_truck_load = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
-        self.complete = False
+        self.problem : 'ACLProblem' = problem
+        self.deck_assignment : Dict[str, Optional[str]]= {v: None for v in problem.vehicles.keys()}
+        self.current_truck_load : List[Dict[str, DeckState]] = [{deck_id: DeckState(load=[], capacity_remaining=self.problem.transporter.decks[deck_id].capacity, capacity_used=0) for deck_id in self.problem.transporter.decks.keys()} for _ in range(len(self.problem.route))]
+        self.complete : bool = False
         if json_data is not None:
             self.from_json(json_data)
 

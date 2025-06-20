@@ -1,13 +1,17 @@
 # capacity constriant:
-import json
 from typing import Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from problem import ACLProblem
+    from solution import ACLSolution
 
 def total_capacity_constraint(problem: 'ACLProblem', solution: 'ACLSolution', distance_to_feasibility: bool = False) -> Union[bool, int]:
-    transporter_capacity = problem.transporter.total_capacity
+    transporter_capacity : int = problem.transporter.total_capacity
     # calculate the deck capacities from solution i.e., ACLSolution
-    total_capacities_violations = 0
+    total_capacities_violations : int = 0
     for decks in solution.current_truck_load:
-        total_capacity_used = 0
+        total_capacity_used : int = 0
         for vehicle_id, deck_state in decks.items():            
             total_capacity_used += deck_state.capacity_used
         if total_capacity_used > transporter_capacity:
@@ -21,7 +25,7 @@ def total_capacity_constraint(problem: 'ACLProblem', solution: 'ACLSolution', di
         return True
         
 def deck_capacity_constraint(problem: 'ACLProblem', solution: 'ACLSolution', distance_to_feasibility: bool = False) -> Union[bool, int]:
-    total_distance_to_feasibility = 0
+    total_distance_to_feasibility : int = 0
     for decks in solution.current_truck_load:
         for vehicle_id, deck_state in decks.items():
             if deck_state.capacity_remaining < 0:
