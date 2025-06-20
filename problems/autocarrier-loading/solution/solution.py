@@ -2,7 +2,7 @@ import itertools
 from copy import deepcopy
 import click
 
-from roar_net_api.operations import SupportsObjectiveValue, SupportsCopySolution
+from roar_net_api.operations import SupportsObjectiveValue, SupportsLowerBound, SupportsCopySolution
 
 from data_helper_class import Vehicle
 from dataclasses import dataclass
@@ -16,8 +16,9 @@ class DeckState():
     capacity_used: int
 
 class ACLSolution(
-    SupportsObjectiveValue,
-    SupportsCopySolution
+    SupportsObjectiveValue[int],
+    SupportsCopySolution,
+    SupportsLowerBound[int]
 ):
     def __init__(self, problem : 'ACLProblem', json_data: Optional[List[Dict[str, Any]]] = None):
         self.problem = problem
